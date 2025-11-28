@@ -1,5 +1,6 @@
-import { Router } from "express";
-import { createServiceFormController } from "../../controllers/FormController";
+import { Router } from 'express';
+import { createServiceFormController } from '../../controllers/FormController';
+import { middlewarePresets } from '../../middlewares';
 
 const router = Router();
 
@@ -121,6 +122,6 @@ const router = Router();
  *           example: "2025-11-01T22:00:00.000Z"
  */
 
-router.post("/", createServiceFormController);
+router.post('/', middlewarePresets.publicForm, createServiceFormController);
 
 export default router;

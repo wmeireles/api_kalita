@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { 
-  imageValidator, 
-  portfolioValidator, 
-  avatarValidator, 
-  handleMulterError 
+import {
+  imageValidator,
+  portfolioValidator,
+  avatarValidator,
+  handleMulterError,
 } from '../../middlewares/fileValidation';
-import { authenticateToken, requireAdmin } from '../../middlewares/auth';
+import { middlewarePresets } from '../../middlewares';
 
 const router = Router();
 
@@ -40,15 +40,15 @@ const router = Router();
  *       403:
  *         description: Sem permissão de admin
  */
-router.post('/portfolio', 
-  authenticateToken,
-  requireAdmin,
+router.post(
+  '/portfolio',
+  middlewarePresets.adminOperation,
   ...portfolioValidator.multiple('photos'),
   handleMulterError,
   async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
-      
+
       if (!files || files.length === 0) {
         return res.status(400).json({
           success: false,
@@ -60,7 +60,7 @@ router.post('/portfolio',
       }
 
       // Aqui você salvaria os arquivos no storage (AWS S3, Cloudinary, etc.)
-      const uploadedFiles = files.map(file => ({
+      const uploadedFiles = files.map((file) => ({
         originalName: file.originalname,
         size: file.size,
         mimetype: file.mimetype,
@@ -116,14 +116,15 @@ router.post('/portfolio',
  *       401:
  *         description: Não autenticado
  */
-router.post('/avatar',
-  authenticateToken,
+router.post(
+  '/avatar',
+  middlewarePresets.adminOperation,
   ...avatarValidator.single('avatar'),
   handleMulterError,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const file = req.file;
-      
+
       if (!file) {
         return res.status(400).json({
           success: false,
@@ -188,24 +189,29 @@ router.post('/avatar',
  *       400:
  *         description: Erro de validação dos arquivos
  */
-router.post('/gallery',
+router.post(
+  '/gallery',
+  middlewarePresets.publicUpload,
   ...imageValidator.multiple('images'),
   handleMulterError,
   async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
-      
+
       // Upload opcional - pode não ter arquivos
-      const uploadedFiles = files?.map(file => ({
-        originalName: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-      })) || [];
+      const uploadedFiles =
+        files?.map((file) => ({
+          originalName: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+        })) || [];
 
       res.json({
         success: true,
         data: {
-          message: files?.length ? 'Imagens enviadas com sucesso' : 'Nenhuma imagem enviada',
+          message: files?.length
+            ? 'Imagens enviadas com sucesso'
+            : 'Nenhuma imagem enviada',
           files: uploadedFiles,
           count: uploadedFiles.length,
         },
